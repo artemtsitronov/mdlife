@@ -94,9 +94,11 @@ impl MdLife {
     }
 }
 
+#[allow(for_loops_over_fallibles)]
 impl eframe::App for MdLife {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        while let Some(t) = self.rx.try_iter().last() {
+        // instead of `if let Some(t)`. It's painful to watch, but...
+        for t in self.rx.try_iter().last() {
             self.text = t;
         }
 
@@ -129,3 +131,8 @@ fn main() -> eframe::Result<()> {
         }),
     )
 }
+
+// Well fellow traveller, if you scrolled this far, congratulations!
+// I had a lot of fun doing this challenge,
+// and hope I'll get it approved on HackClub.
+//                                              - Your favorite cat, Artem

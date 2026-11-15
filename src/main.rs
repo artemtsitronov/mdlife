@@ -11,6 +11,24 @@ fn load(path: &Path) -> String {
     fs::read_to_string(path).unwrap_or_else(|_| APOLOGY_LETTER.to_string())
 }
 
+fn visuals(t: &fenth::Theme) -> egui::Visuals {
+    let c = |role: &str| {
+        let c = t[role];
+        egui::Color32::from_rgb(c.r, c.g, c.b)
+    };
+
+    // myeah, picking a visual without if will be hard... unless...
+    let base = [egui::Visuals::light, egui::Visuals::dark]
+        [(t.variant() == fenth::Variant::Dark) as usize]();
+    egui::Visuals {
+        panel_fill: c("background"),
+        override_text_color: Some(c("foreground")),
+        hyperlink_color: c("link"),
+        code_bg_color: c("surface"),
+        ..base
+    }
+}
+
 struct MdLife {
     cache: CommonMarkCache,
     path: PathBuf,
@@ -31,7 +49,11 @@ impl MdLife {
 impl eframe::App for MdLife {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         egui::ScrollArea::vertical().show(ui, |ui| {
-            CommonMarkViewer::new().show(ui, &mut self.cache, &self.text);
+            egui::Frame::new()
+                .inner_margin(egui::Margin::same(32))
+                .show(ui, |ui| {
+                    CommonMarkViewer::new().show(ui, &mut self.cache, &self.text);
+                });
         });
     }
 }
@@ -45,6 +67,10 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "mdlife",
         eframe::NativeOptions::default(),
-        Box::new(move |_cc| Ok(Box::new(MdLife::new(path)))),
+        Box::new(move |cc| {
+            let theme = fenth::get("catppuccin-latte").unwrap();
+            cc.egui_ctx.set_visuals(visuals(theme));
+            Ok(Box::new(MdLife::new(path)))
+        }),
     )
 }

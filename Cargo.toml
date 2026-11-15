@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 eframe = "0.37.0"
 egui_commonmark = "0.26.0"
+fenth = "0.1.0"
 notify = "8.2.2"

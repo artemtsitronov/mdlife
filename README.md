@@ -1,10 +1,12 @@
+https://github.com/user-attachments/assets/29e8d853-b4ee-488d-bf87-bed10f38c9ea
+
 # mdlife
 
 A tiny miny micro Markdown preview.
 Lets you preview a `.md` file from the terminal, and supports hot-reload.
 It is cross-platform, written in egui, Rust.
 
-Made for [Hack Club](https://hackclub.com).
+Made by Artem Tsitronov for [Hack Club](https://hackclub.com).
 
 ## ~ USAGE ~
 ```bash

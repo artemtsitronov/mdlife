@@ -10,8 +10,6 @@ You wondered in this markdown sample.
 ---
 
 > A blockquote.
->
-> > Hello, I'm Edward Nest. Nest, Ed.
 
 - Bull one
 - Bull two
@@ -33,5 +31,3 @@ fn main() {
     println!("I'm just a poor Rust. Let me live in a .rs file, not in a markdown!!");
 }
 ```
-
-<b>RAW HTML</b> 🐾 àèàèàè(why am i doing this.)

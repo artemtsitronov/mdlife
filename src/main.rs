@@ -1,8 +1,10 @@
 use eframe::egui;
 use egui_commonmark::{CommonMarkCache, CommonMarkViewer};
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::{
     env, fs,
     path::{Path, PathBuf},
+    sync::mpsc,
 };
 
 const APOLOGY_LETTER: &str = "# Pardon me fellow human. I failed. \n\nI couldn't read the file.";
@@ -60,23 +62,44 @@ fn visuals(t: &fenth::Theme) -> egui::Visuals {
 
 struct MdLife {
     cache: CommonMarkCache,
-    path: PathBuf,
     text: String,
+    rx: mpsc::Receiver<String>,
+    _watcher: RecommendedWatcher, // He. Must. Not. DIE.
 }
 
 impl MdLife {
-    fn new(path: PathBuf) -> Self {
+    fn new(path: PathBuf, ctx: egui::Context) -> notify::Result<Self> {
+        let (tx, rx) = mpsc::channel();
         let text = load(&path);
-        Self {
+        let dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
+
+        let mut watcher =
+            notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
+                res.ok()
+                    .filter(|e| !e.kind.is_access() && e.paths.contains(&path))
+                    .iter()
+                    .for_each(|_| {
+                        tx.send(load(&path)).ok();
+                        ctx.request_repaint();
+                    });
+            })?;
+        watcher.watch(&dir, RecursiveMode::NonRecursive)?;
+
+        Ok(Self {
             cache: CommonMarkCache::default(),
-            path,
             text,
-        }
+            rx,
+            _watcher: watcher,
+        })
     }
 }
 
 impl eframe::App for MdLife {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        while let Some(t) = self.rx.try_iter().last() {
+            self.text = t;
+        }
+
         egui::CentralPanel::default().show(ui, |ui| {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 egui::Frame::new()
@@ -94,6 +117,7 @@ fn main() -> eframe::Result<()> {
         .nth(1)
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("sample.md"));
+    let path = path.canonicalize().unwrap_or(path);
 
     eframe::run_native(
         "mdlife",
@@ -101,7 +125,7 @@ fn main() -> eframe::Result<()> {
         Box::new(move |cc| {
             let theme = fenth::get("catppuccin-mocha").unwrap();
             cc.egui_ctx.set_visuals(visuals(theme));
-            Ok(Box::new(MdLife::new(path)))
+            Ok(Box::new(MdLife::new(path, cc.egui_ctx.clone())?))
         }),
     )
 }
